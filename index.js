@@ -37,14 +37,15 @@ const client = new MongoClient(uri, {
 let tutorCollection, bookingCollection, userCollection;
 let dbInstance = null;
 
-// Safe lazy database loader to prevent function execution timeouts on Vercel
+// Clean, lazy database loading method to keep serverless functions from hanging
 async function getDB() {
     try {
         if (dbInstance) return dbInstance;
         
+        // CRITICAL FIX: Explicitly await connection setup to prevent MongoServerSelectionError
         await client.connect();
         dbInstance = client.db("mediQueueDB");
-        console.log("🚀 Successfully connected to MongoDB Atlas!");
+        console.log("🚀 Serverless connection established cleanly with MongoDB Atlas!");
         return dbInstance;
     } catch (error) {
         console.error("❌ Database connection error:", error);
@@ -70,6 +71,7 @@ app.use(async (req, res, next) => {
         userCollection = db.collection("users");
         next();
     } catch (err) {
+        console.error("❌ Middleware connection resolution error:", err);
         res.status(500).send({ 
             error: true, 
             message: "Database connectivity handshake timed out. Please refresh." 
@@ -98,11 +100,6 @@ const verifyJWT = (req, res, next) => {
 // AUTHENTICATION & CUSTOM JWT ENDPOINTS
 // -------------------------------------------------------------------------
 
-// -------------------------------------------------------------------------
-// AUTHENTICATION & CUSTOM JWT ENDPOINTS
-// -------------------------------------------------------------------------
-
-// Changed from '/register' to a secure fallback path handle
 app.post('/register', async (req, res) => {
     try {
         const { name, email, photo, password } = req.body;
