@@ -10,7 +10,10 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:3000'], // Next.js default local dev port
+    origin: [
+        'http://localhost:3000',
+        'https://mediqueue-brown.vercel.app' // Added https:// prefix
+    ], // <-- CRITICAL: Added missing comma right here!
     credentials: true
 }));
 app.use(express.json());
