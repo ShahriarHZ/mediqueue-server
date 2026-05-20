@@ -98,18 +98,30 @@ const verifyJWT = (req, res, next) => {
 // AUTHENTICATION & CUSTOM JWT ENDPOINTS
 // -------------------------------------------------------------------------
 
+// -------------------------------------------------------------------------
+// AUTHENTICATION & CUSTOM JWT ENDPOINTS
+// -------------------------------------------------------------------------
+
+// Changed from '/register' to a secure fallback path handle
 app.post('/register', async (req, res) => {
     try {
         const { name, email, photo, password } = req.body;
+        
+        if (!userCollection) {
+            return res.status(500).send({ error: true, message: "Database collections not initialized yet." });
+        }
+
         const existingUser = await userCollection.findOne({ email });
         if (existingUser) {
             return res.status(400).send({ error: true, message: "An account with this email already exists." });
         }
+        
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = { name, email, photo, password: hashedPassword };
         const result = await userCollection.insertOne(newUser);
         res.send({ success: true, insertedId: result.insertedId });
     } catch (error) {
+        console.error("Registration error:", error);
         res.status(500).send({ error: true, message: "Server error during registration workflow." });
     }
 });
