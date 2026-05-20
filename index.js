@@ -116,7 +116,24 @@ app.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = { name, email, photo, password: hashedPassword };
         const result = await userCollection.insertOne(newUser);
-        res.send({ success: true, insertedId: result.insertedId });
+        
+        // -------------------------------------------------------------------------
+        // AUTOMATIC SIGN-IN FIX: Generate a JWT for the new user immediately
+        // -------------------------------------------------------------------------
+        const token = jwt.sign(
+            { email: newUser.email }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' }
+        );
+
+        // Return everything your frontend needs to set its login state instantly
+        res.send({ 
+            success: true, 
+            insertedId: result.insertedId,
+            token,
+            user: { name: newUser.name, email: newUser.email, photo: newUser.photo }
+        });
+
     } catch (error) {
         console.error("Registration error:", error);
         res.status(500).send({ error: true, message: "Server error during registration workflow." });
